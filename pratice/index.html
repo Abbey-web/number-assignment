@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Number Assignment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: blue;
+            color: white;
+            margin: 40px;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        #spinner {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px;
+            height: 50px;
+        }
+        #numberList {
+            margin-top: 20px;
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            font-size: 18px;
+            margin: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Random Number Assignment</h2>
+
+    <input type="text" id="nameInput" placeholder="Enter your name">
+    <button onclick="assignNumber()">Get a Number</button>
+    <button onclick="clearNumbers()">Reset Numbers</button>
+
+    <h3>Spinning Wheel:</h3>
+    <div id="spinner">🎡 Spinning...</div>
+
+    <h3>Assigned Numbers:</h3>
+    <ul id="numberList"></ul>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let assignedNumbers = JSON.parse(localStorage.getItem('assignedNumbers')) || [];
+            const maxNumber = 20; // Maximum number limit
+
+            function assignNumber() {
+                let name = document.getElementById('nameInput').value.trim();
+                if (name === "") {
+                    alert("Please enter your name first!");
+                    return;
+                }
+
+                let newNumber = getRandomUniqueNumber();
+                if (newNumber !== null) {
+                    // Simulate spinning effect
+                    let spinner = document.getElementById('spinner');
+                    let spinValues = ["🎡", "🔄", "⏳", "🎰", "🎲", newNumber]; // Animations
+                    let i = 0;
+                    let spinInterval = setInterval(() => {
+                        spinner.textContent = spinValues[i++];
+                        if (i >= spinValues.length) {
+                            clearInterval(spinInterval);
+                            spinner.textContent = `🎉 Assigned: ${newNumber}`;
+                            assignedNumbers.push({ name, number: newNumber });
+                            localStorage.setItem('assignedNumbers', JSON.stringify(assignedNumbers));
+                            updateList();
+                        }
+                    }, 300); // Spins every 300ms
+                } else {
+                    alert("All numbers have been assigned!");
+                }
+            }
+
+            function getRandomUniqueNumber() {
+                let availableNumbers = [];
+                for (let i = 1; i <= maxNumber; i++) {
+                    if (!assignedNumbers.some(entry => entry.number === i)) {
+                        availableNumbers.push(i);
+                    }
+                }
+
+                if (availableNumbers.length === 0) {
+                    return null; // No numbers left
+                }
+
+                // Pick a random number from available ones
+                return availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
+            }
+
+            function updateList() {
+                let list = document.getElementById('numberList');
+                list.innerHTML = '';
+                assignedNumbers.forEach(entry => {
+                    let li = document.createElement('li');
+                    li.innerHTML = `${entry.name}: Number ${entry.number} <button onclick="removeNumber(${entry.number})">Remove</button>`;
+                    list.appendChild(li);
+                });
+            }
+
+            function removeNumber(num) {
+                assignedNumbers = assignedNumbers.filter(entry => entry.number !== num);
+                localStorage.setItem('assignedNumbers', JSON.stringify(assignedNumbers));
+                updateList();
+            }
+
+            function clearNumbers() {
+                localStorage.removeItem('assignedNumbers');
+                assignedNumbers = [];
+                updateList();
+                document.getElementById('spinner').textContent = "🎡 Spinning...";
+            }
+
+            // Load numbers on page load
+            updateList();
+
+            // Expose functions globally so buttons work
+            window.assignNumber = assignNumber;
+            window.clearNumbers = clearNumbers;
+            window.removeNumber = removeNumber;
+        });
+    </script>
+
+</body>
+</html>
